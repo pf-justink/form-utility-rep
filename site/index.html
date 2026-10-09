@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Council Inspection Sandbox (replica)</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --nav:#00008b; --link:#0000ee; --tab:#2e7d1e; --panel:#eee; }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 13px Arial, Helvetica, sans-serif; background:#fff; color:#222; }
+  a { color: var(--link); cursor:pointer; text-decoration:none; }
+  .nav { background:var(--nav); color:#fff; height:45px; display:flex; align-items:center; padding:0 12px 0 14px; gap:25px; }
+  .nav button { background:none; border:0; color:#fff; font:inherit; font-size:14px; cursor:pointer; padding:6px 0; white-space:nowrap; }
+  #btn-menu { margin-right:10px; font-size:17px; }
+  #btn-edit { margin-right:20px; }
+  .nav button:hover { text-decoration:underline; }
+  .nav .sp { flex:1; }
+  .nav .info { font-size:14px; }
+  #sandbox-banner { position:fixed; right:8px; bottom:6px; z-index:5; background:#fff3cd; color:#664d03; padding:2px 8px; font-size:11px; border:1px solid #e6d27a; border-radius:3px; opacity:.9; }
+  .hide { display:none !important; }
+
+  /* grid view */
+  #main { display:flex; gap:38px; padding:7px 12px 0 13px; align-items:flex-start; }
+  #main > div:first-child { flex:0 0 1222px; width:1222px; }
+  #gridwrap { width:1222px; border:1px solid #666; height:784px; overflow:auto; background:#fff; }
+  table.grid { border-collapse:collapse; table-layout:fixed; width:1400px; font-size:14px; }
+  .grid th { background:#ececec; text-align:left; padding:0 5px; height:27px; position:sticky; top:0; border-right:1px solid #d4d4d4; font-weight:bold; color:#222; z-index:1; }
+    .grid th.ck { white-space:nowrap; color:#00008b; font-weight:normal; border-right:0; }
+  .grid th.ck span { display:inline-block; width:22px; text-align:center; margin-left:12px; }
+  .grid td { padding:0 5px; height:27px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border-bottom:1px solid #eee; }
+  .grid td.ck { padding-left:30px; }
+  .grid td.ck input { margin:0; vertical-align:middle; }
+  .grid tr.grp td { background:#f2f2f2; font-weight:normal; height:26px; padding-left:8px; border-bottom:1px solid #e2e2e2; }
+  .grid tr.row.sel td { background:#6495ed; }
+  .grid tr.row.new td, .grid tr.row.new td a { color:red; }
+  .grid td.date, .grid td.wf { color:var(--link); }
+  #preview { flex:1; min-width:0; }
+  .tabs { display:flex; flex-wrap:wrap; gap:3px 7px; padding:5px 0 1px 1px; }
+  .tabs a { color:var(--tab); padding:5px 4px; border-radius:3px; font-size:14px; line-height:20px; }
+  .tabs a.on { background:#eee; }
+  .panel { background:var(--panel); border:1px solid #777; padding:2px 26px 0 13px; }
+  .field { margin:0 0 9px; }
+  .field label { display:block; padding:2px 0 1px; font-size:13px; line-height:16px; }
+  .field.mandatory label { color:#0000ff; }
+  .field.mandatory label::after { content:" \24D8"; color:#d00; font-weight:bold; }
+  .field input, .field select, .field textarea { width:100%; height:28px; font-size:15px; padding:2px 6px; border:1px solid #777; background:#fff; }
+  .field.mandatory input, .field.mandatory select { color:#0000ff; }
+  .field.err input, .field.err select { border:2px solid #d00; }
+  .errmsg { color:#d00; font-size:12px; display:none; }
+  .field.err .errmsg { display:block; }
+  .readonly .field input, .readonly .field select { background:#f2f2f2; color:#666; pointer-events:none; }
+  .pager { padding:20px 14px; display:flex; align-items:center; gap:8px; color:#333; font-size:14px; }
+  .pager b { background:#4a9ae8; color:#fff; padding:5px 9px; border-radius:3px; font-weight:normal; border:1px solid #3b88d4; }
+  .pager .pg { border:1px solid #4a9ae8; color:#4a9ae8; padding:5px 9px; border-radius:3px; }
+  .ver { font-family:Georgia,serif; color:#00008b; font-size:16px; margin-left:30px; }
+
+  /* form view */
+  #formview { padding:0; }
+  #formview .tabs { padding:8px 26px; }
+  #formview .panel { margin:0 28px; padding-right:50px; }
+
+  /* slide-out menu */
+  #menu { position:fixed; left:0; top:0; width:292px; background:var(--nav); color:#fff; z-index:20; border:1px solid #66a; }
+  #menu .item { display:flex; align-items:center; gap:22px; padding:10px 18px; border-bottom:1px solid #4a4ac0; cursor:pointer; min-height:48px; }
+  #menu .item:hover { background:#1a1aa8; }
+  #menu .item b { display:block; font-size:14px; }
+  #menu .item span { font-size:13px; }
+  #menu .ico { width:22px; text-align:center; font-size:20px; }
+  #scrim { position:fixed; inset:0; background:rgba(255,255,255,.75); z-index:10; }
+
+  /* photo view */
+  #photoview .alert { margin-bottom:20px; background:#dff0d8; color:#3c763d; padding:14px 16px; border:1px solid #d6e9c6; position:relative; }
+  #photoview .alert .x { position:absolute; right:12px; top:10px; cursor:pointer; color:#999; }
+  #photoview .bar { background:var(--nav); height:51px; margin-top:0; border-top:3px solid #333; display:flex; align-items:center; padding:0 18px; }
+  #photoview .bar button { background:none; border:0; color:#fff; font-size:20px; cursor:pointer; }
+  #photoview .tools { display:flex; gap:13px; padding:23px 0 0 338px; align-items:center; }
+  #photoview .tools > * { flex-shrink:0; }
+  #photoview .tools input[type=text] { width:400px; height:34px; padding:2px 5px; font-size:14px; border:2px solid #444; }
+  .btn { background:#5bc0de; color:#fff; border:1px solid #46b8da; padding:7px 12px; border-radius:3px; font-size:14px; cursor:pointer; }
+  #photo-save,#photo-cancel,#photo-upload { width:87px; height:34px; padding:0; }
+  #photo-save { margin-left:1px; }
+  #photo-rotate { width:107px; height:34px; padding:0; }
+  .btn.plain { background:#fff; color:#333; border-color:#ccc; }
+  #photoview .info { padding:6px 338px; color:#777; font-size:12px; }
+  .carousel { position:relative; width:1234px; overflow:hidden; }
+  .carousel img { width:800px; display:block; }
+  .carousel .item { position:relative; width:100%; }
+  .carousel .item.incoming { position:absolute; top:0; left:0; }
+  .cctl { position:absolute; top:0; bottom:0; width:15%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:44px; cursor:pointer; user-select:none; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+  .cctl.l { left:0; background:linear-gradient(to right, rgba(0,0,0,.35), rgba(0,0,0,.0001)); }
+  .cctl.r { right:0; background:linear-gradient(to left, rgba(0,0,0,.35), rgba(0,0,0,.0001)); }
+  .cdots { position:absolute; left:0; right:0; bottom:20px; text-align:center; margin:0; padding:0; list-style:none; }
+  .cdots li { display:inline-block; width:10px; height:10px; margin:1px; border:1px solid #fff; border-radius:10px; cursor:pointer; }
+  .cdots li.on { width:12px; height:12px; margin:0; background:#fff; }
+  #gallery { display:flex; flex-wrap:wrap; gap:16px; padding:16px 0 16px 338px; }
+  #gallery figure { margin:0; width:160px; border:1px solid #ccc; background:#fff; padding:6px; }
+  #gallery img { width:100%; display:block; }
+  #gallery figcaption { padding-top:6px; font-size:13px; word-break:break-word; }
+  #preview-photo { padding:39px 0 0 338px; }
+  #preview-photo img { width:800px; max-width:100%; display:block; }
+  .toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:10px 18px; border-radius:4px; z-index:50; }
+</style>
+</head>
+<body>
+<div id="sandbox-banner">SANDBOX REPLICA. Not connected to any council or client system. Data lives in this browser only.</div>
+
+<!-- ============ GRID / MAIN VIEW ============ -->
+<div id="gridview">
+  <div class="nav">
+    <button id="btn-menu" aria-label="Menu">&#9776;</button>
+    <button id="btn-insert">&#10010; Insert</button>
+    <button id="btn-edit">&#9998; Edit</button>
+    <button id="btn-delete">&#128465; Delete</button>
+    <button id="btn-new">&#9776; New</button>
+    <button id="btn-deleted">&#9776; Deleted</button>
+    <button id="btn-all">&#9776; All</button>
+    <span class="sp"></span>
+    <span class="info" id="today-grid"></span>
+    <button id="btn-preview">&#9638; Preview</button>
+    <button id="btn-divider">&#9707; Divider</button>
+    <button id="btn-logout">&#10162; Logout</button>
+  </div>
+  <div id="main">
+    <div>
+      <div id="gridwrap">
+        <table class="grid" id="grid">
+          <colgroup><col style="width:77px"><col style="width:127px"><col style="width:270px"><col style="width:50px"><col style="width:140px"><col style="width:100px"><col style="width:100px"><col style="width:36px"><col></colgroup>
+          <thead><tr><th class="ck"><span>&#9745;</span><span style="text-decoration:underline;font-family:serif">T</span></th><th>DateReceived</th><th>ParkName</th><th>Par...</th><th>Node</th><th>TimeReceived</th><th>WF</th><th>Loc</th><th>Pic</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="pager"><b>1</b><span class="pg">2</span><span class="pg">3</span><span class="pg">...</span><span class="pg">&raquo;</span><span class="pg">&raquo;|</span> <input id="pg" value="1" style="width:34px"> <span id="pgtotal">/1</span>
+        <span>#Rec:<span id="reccount">0</span></span><span class="ver">V6.20 | BCC 11 Tab Regular Playground Report (REPLICA)</span></div>
+    </div>
+    <div id="preview"><div id="preview-body"></div></div>
+  </div>
+</div>
+
+<!-- ============ FORM VIEW ============ -->
+<div id="formview" class="hide">
+  <div class="nav">
+    <button id="btn-refresh">&#9776; Refresh</button>
+    <button id="btn-save">&#128190; Save</button>
+    <button id="btn-saveemail">&#9993; Save &amp; Email</button>
+    <button id="btn-cancel">&#8634; Cancel</button>
+    <button id="btn-showimage">&#9745; Show Image</button>
+    <span class="sp"></span>
+    <span class="info" id="today-form"></span>
+  </div>
+  <div class="tabs" id="form-tabs"></div>
+  <div class="panel" id="form-panel"></div>
+</div>
+
+<!-- ============ PHOTO VIEW ============ -->
+<div id="photoview" class="hide">
+  <div class="alert" id="photo-alert"><span id="photo-alert-text"></span><span class="x" onclick="this.parentNode.classList.add('hide')">&times;</span></div>
+  <div class="bar"><button id="btn-menu2" aria-label="Menu">&#9776;</button></div>
+  <div class="tools">
+    <input type="text" id="photo-caption" placeholder="Caption" aria-label="Caption">
+    <button class="btn" id="photo-save">&#128190; Save</button>
+    <button class="btn plain" id="photo-cancel">&#8634; Cancel</button>
+    <span style="width:8px"></span>
+    <button class="btn" id="photo-rotate">&#8635; Rotate</button>
+    <span style="width:7px"></span>
+    <button class="btn" id="photo-upload">&#9729; Upload</button>
+    <input type="file" id="photo-file" accept="image/*" class="hide">
+  </div>
+  <div id="preview-photo"></div>
+  <div id="gallery"></div>
+  <div class="info" id="photo-info"></div>
+</div>
+
+<!-- ============ MENU ============ -->
+<div id="scrim" class="hide"></div>
+<div id="menu" class="hide">
+  <div class="item" data-go="main"><div class="ico">&#8962;</div><div><b>Main</b><span>Data grid and Record form</span></div></div>
+  <div class="item" data-go="filters"><div class="ico">&#9660;</div><div><b>Filters</b><span>Filter by columns, date and techid</span></div></div>
+  <div class="item" data-go="form"><div class="ico">&#9998;</div><div><b>Form</b><span>Image of current record</span></div></div>
+  <div class="item" data-go="photos"><div class="ico">&#128247;</div><div><b>Photos</b><span>Photo Gallery</span></div></div>
+  <div class="item" data-go="sign"><div class="ico">&#9999;</div><div><b>Sign</b><span>Signatures</span></div></div>
+  <div class="item" data-go="map"><div class="ico">&#128205;</div><div><b>Map</b><span>Google Map</span></div></div>
+  <div class="item" data-go="pdf"><div class="ico">&#128196;</div><div><b>PDF</b><span>Open PDF in a new window</span></div></div>
+  <div class="item" data-go="pdfdl"><div class="ico">&#128196;</div><div><b>PDF Download</b><span>PDF Download</span></div></div>
+  <div class="item" data-go="switch"><div class="ico">&#10162;</div><div><b>Switch Forms</b><span>Switch Forms or Applications</span></div></div>
+  <div class="item" data-go="saveopts"><div class="ico">&#9776;</div><div><b>Save Options</b><span>Save Divider, Preview</span></div></div>
+  <div class="item" data-go="version"><div class="ico">&lt;/&gt;</div><div><b>Version No</b><span>Latest Version Number Check</span></div></div>
+  <div class="item" data-go="icon"><div class="ico">&#9776;</div><div><b>Icon</b><span>Show or hide icons of buttons</span></div></div>
+  <div class="item" data-go="sbx-export" style="background:#3a3a00"><div class="ico">&#8681;</div><div><b>Sandbox: Export JSON</b><span>Download all records (for checking bot output)</span></div></div>
+  <div class="item" data-go="sbx-reset" style="background:#3a3a00"><div class="ico">&#8635;</div><div><b>Sandbox: Reset data</b><span>Wipe and reseed demo records</span></div></div>
+</div>
+
+<script>
+/* =====================================================================
+   FIELD DEFINITIONS  (labels taken from the live form screenshots)
+   ASSUMPTIONS flagged in README: dropdown option lists are placeholders.
+   ===================================================================== */
+const RATING = ["1", "2", "3", "4", "5", "N/A", ""];
+const R = (key, label) => ({ key, label, type: "select", options: RATING, rating: true });
+// Every rating question gets an issue-description field once the rating is 3 or higher.
+const needsComment = (f, rec) => f.rating && parseInt(rec[f.key], 10) >= 3;
+function expandFields(tab, rec) {
+  const out = [];
+  for (const f of tab.fields) {
+    out.push(f);
+    if (needsComment(f, rec)) out.push({ key: "c_" + f.key, label: f.label.split(" ")[0] + " Comments (Mandatory if Rating > 3 )", type: "text", mandatory: true });
+  }
+  return out;
+}
+const T = (key, label, extra) => Object.assign({ key, label, type: "text" }, extra);
+
+const TABS = [
+  { id: "park", title: "Park", fields: [
+    T("ParkNumber", "ParkNumber"),
+    T("Node", "Node"),
+    T("ParkName", "ParkName"),
+    { key: "PlaygroundRefPSFBM", label: "Playground Ref (PSFBM)", type: "select", options: ["", "P", "S", "F", "B", "M"] },
+    { key: "PlaygroundRef1234", label: "Playground Ref (1234)", type: "select", options: ["", "1", "2", "3", "4"] },
+    T("NodeFunc", "Node Func"),
+    { key: "EstimatedAge", label: "Estimated Age", type: "select", options: ["0 - 5 years", "5 - 10 years", "10 - 15 years", "15 - 20 years", "over 20 years", ""], default: "" },
+    { key: "InspectionType", label: "InspectionType", type: "select", mandatory: true, options: ["Comprehensive", "Operational", ""], default: "Operational" },
+  ]},
+  { id: "equipment", title: "Equipment", fields: [
+    R("r101", "1.01r is complete rating"),
+    R("r102", "1.02r free from broken or damaged parts rating"),
+    R("r103", "1.03r free from sharp and protruding objects rating"),
+    R("r104", "1.04r graffiti rating"),
+    R("r105", "1.05o ropes, rubber, fibreglass, plastic, chains (wear and tear) rating"),
+    R("r106", "1.06o joints and connections (tight) rating"),
+    R("r107", "1.07o S-hooks, shackles and chain links (closed and free from wear) rating"),
+    R("r108", "1.08o footings (not exposed or damaged) rating"),
+    R("r109", "1.09o stable and does not move rating"),
+    R("r110", "1.10c entrapment points rating"),
+    R("r111", "1.11c crush and pinch points rating"),
+  ]},
+  { id: "component", title: "Component", fields: [
+    R("r202", "2.02c footings - (free from corrosion, rot, damage at base) rating"),
+    R("r203", "2.03o concrete surfaces (free from cracks, damage and level with surrounding ground) rating"),
+    R("r204", "2.04o timber elements (free from splitting, splinters, decay or insect damage) rating"),
+    R("r205", "2.05o moving parts (lubricated, free from wear and damage) rating"),
+    R("r206", "2.06o painted elements or treated surfaces (free from flaking) rating"),
+    R("r207", "2.07r shade structure (free from rips and damage) rating"),
+    R("r208", "2.08r shade structure (no graffiti) rating"),
+  ]},
+  { id: "under", title: "Undersurface/Environment", fields: [
+    R("r301", "3.01c softfall (correct height) rating"),
+    R("r302", "3.02r forms a continuous level surface with retaining structure. rating"),
+    T("a303", "3.03c total area for soft pour rubber (m2)"),
+    T("rep304", "3.04c 05c Replace"),
+    T("repair304", "3.04c 05c Repair"),
+    R("r304", "3.04c soft pour rubber rating"),
+    R("r401", "4.01r litter and debris rating"),
+    R("r402", "4.02c tripping hazards rating"),
+    R("r403", "4.03r hazardous insects rating"),
+    R("r404", "4.04r cleanliness of equipment rating"),
+    R("r405", "4.05c free from drainage problems rating"),
+    R("r406", "4.06c surface temperatures rating"),
+  ]},
+  { id: "trees", title: "Trees/Others", fields: [
+    R("r501", "5.01r overhanging, dead/dying or dangerous limbs rating"),
+    R("r502", "5.02c planted and maintained for immediate and future shade? rating"),
+    R("r601", "6.01c All equipment complies with current Australian Standards? rating"),
+    R("r602", "6.02c Overall Condition Level rating"),
+    R("r603", "6.03c Use of equipment per week rating"),
+  ]},
+  { id: "softfall", title: "Softfall Required", fields: [
+    { key: "sf1", label: "Softfall Required 1", type: "select", options: ["", "Yes", "No"] },
+    T("sfa1", "Softfall Amount 1"),
+    { key: "sfu1", label: "Softfall Unit 1", type: "select", options: ["", "m2", "m3", "mm"] },
+    { key: "sf2", label: "Softfall Required 2", type: "select", options: ["", "Yes", "No"] },
+    T("sfa2", "Softfall Amount 2"),
+    { key: "sfu2", label: "Softfall Unit 2", type: "select", options: ["", "m2", "m3", "mm"] },
+    T("estReplace", "Estimated Replace $ to bring to compliance level"),
+    T("estRepair", "Estimated Repair $ to bring to compliance level"),
+    R("r60", "6.0 Special Item rating"),
+  ]},
+  { id: "comments", title: "Comments/Inspector", fields: [
+    T("GeneralComment", "General Comment"),
+    T("Inspector", "Inspector", { mandatory: true, default: "PLAYGROUND NORTH" }),
+  ]},
+];
+
+/* =====================================================================
+   STORAGE: records in localStorage, photo blobs in IndexedDB
+   ===================================================================== */
+const LS = "sandbox_records_v2";
+const load = () => { try { return JSON.parse(localStorage.getItem(LS)) || null; } catch { return null; } };
+const save = recs => localStorage.setItem(LS, JSON.stringify(recs));
+
+function seed() {
+  const names = ["ALPHA","BETA","GAMMA","DELTA","EPSILON","ZETA","ETA","THETA","IOTA","KAPPA","LAMBDA","MU","NU","XI","OMICRON","PI","RHO","SIGMA"];
+  const mk = (id, date, park, num, node, time, wf) => ({ id, DateReceived: date, ParkName: park, ParkNumber: num, Node: node,
+    TimeReceived: time, WF: wf, InspectionType: "Operational", Inspector: "PLAYGROUND NORTH", photos: [], deleted: false });
+  const out = [mk(1, "14/07/2026", "DEMO PARK ALPHA", "0230", "N006", "8:53:42 AM", "Completed")];
+  names.forEach((n, i) => out.push(mk(i + 2, "11/06/2026", "DEMO PARK " + n, String(100 + i * 7).padStart(4, "0"),
+    i % 2 ? "B-RE-" + String(1000 + i * 13) + "-N00" + (i % 5 + 1) : "N0" + String(i % 12 + 1).padStart(2, "0"),
+    (1 + (i * 37) % 11) + ":" + String((i * 17) % 60).padStart(2, "0") + ":" + String((i * 29) % 60).padStart(2, "0") + " " + (i < 9 ? "PM" : "AM"), "Completed")));
+  return out;
+}
+let records = load() || (save(seed()), load());
+let selectedId = null;
+
+let dbp;
+function db() {
+  return dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open("sandbox_photos", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("photos", { keyPath: "id" });
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+}
+async function idb(mode, fn) {
+  const d = await db();
+  return new Promise((res, rej) => { const t = d.transaction("photos", mode); const out = fn(t.objectStore("photos")); t.oncomplete = () => res(out && out.result !== undefined ? out.result : undefined); t.onerror = () => rej(t.error); });
+}
+const putPhoto = p => idb("readwrite", s => s.put(p));
+const getPhoto = id => idb("readonly", s => s.get(id));
+const clearPhotos = () => idb("readwrite", s => s.clear());
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], monNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function headerDate() { const d = new Date(); return `${dayNames[d.getDay()]} ${monNames[d.getMonth()]} ${String(d.getDate()).padStart(2,"0")} ${d.getFullYear()} | Playground North`; }
+const pad = n => String(n).padStart(2, "0");
+const nowDate = () => { const d = new Date(); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`; };
+const nowTime = () => new Date().toLocaleTimeString("en-US");
+function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+const cur = () => records.find(r => r.id === selectedId);
+
+/* =====================================================================
+   VIEW ROUTER
+   ===================================================================== */
+function show(view) {
+  for (const v of ["grid", "form", "photo"]) $("#" + (v === "grid" ? "gridview" : v === "form" ? "formview" : "photoview")).classList.toggle("hide", v !== view);
+  closeMenu();
+  document.body.dataset.view = view;
+}
+function openMenu() { $("#menu").classList.remove("hide"); $("#scrim").classList.remove("hide"); }
+function closeMenu() { $("#menu").classList.add("hide"); $("#scrim").classList.add("hide"); }
+$("#btn-menu").onclick = $("#btn-menu2").onclick = openMenu;
+$("#scrim").onclick = closeMenu;
+
+/* =====================================================================
+   GRID
+   ===================================================================== */
+let filter = "all"; // all | new | deleted
+function renderGrid() {
+  $("#today-grid").textContent = headerDate();
+  const vis = records.filter(r => filter === "deleted" ? r.deleted : filter === "new" ? (!r.deleted && r.WF === "New") : !r.deleted);
+  const byDate = {};
+  vis.forEach(r => (byDate[r.DateReceived] ||= []).push(r));
+  const dkey = d => d.split("/").reverse().join("");
+  const dates = Object.keys(byDate).sort((a, b) => dkey(b).localeCompare(dkey(a)));
+  let html = "";
+  for (const d of dates) {
+    html += `<tr class="grp"><td colspan="9"><span style="font-size:10px;margin-right:6px">&#9698;</span>${esc(d)} ( ${byDate[d].length} )</td></tr>`;
+    for (const r of byDate[d].sort((a, b) => b.id - a.id)) {
+      html += `<tr class="row ${r.id === selectedId ? "sel" : ""} ${r.WF === "New" ? "new" : ""}" data-id="${r.id}">
+        <td class="ck"><input type="checkbox" class="rowchk" ${r.id === selectedId ? "checked" : ""}></td>
+        <td class="date"><a>${esc(r.DateReceived)}</a></td><td>${esc(r.ParkName)}</td><td>${esc(r.ParkNumber)}</td><td>${esc(r.Node)}</td>
+        <td>${esc(r.TimeReceived)}</td><td class="wf">${esc(r.WF)}</td><td></td><td>${r.photos?.length ? "&#127991;" : ""}</td></tr>`;
+    }
+  }
+  $("#grid tbody").innerHTML = html;
+  $("#reccount").textContent = records.length;
+  document.querySelectorAll("#grid tr.row").forEach(tr => {
+    tr.onclick = () => { selectedId = +tr.dataset.id; renderGrid(); };
+    tr.ondblclick = () => { selectedId = +tr.dataset.id; openForm(false); };
+  });
+  renderPreview();
+}
+function renderPreview() {
+  const r = cur();
+  if (!r) { $("#preview-body").innerHTML = '<div style="padding:30px;color:#777">Select a record to preview.</div>'; return; }
+  $("#preview-body").innerHTML = `<div class="tabs">${TABS.map((t,i)=>`<a class="${i===0?"on":""}" data-tab="${t.id}">${esc(t.title)}</a>`).join("")}</div><div class="panel readonly" id="pv-panel"></div>`;
+  const draw = id => { $("#pv-panel").innerHTML = fieldsHtml(TABS.find(t => t.id === id), r);
+    document.querySelectorAll("#preview-body .tabs a").forEach(a => a.classList.toggle("on", a.dataset.tab === id)); };
+  document.querySelectorAll("#preview-body .tabs a").forEach(a => a.onclick = () => draw(a.dataset.tab));
+  draw("park");
+}
+
+$("#btn-insert").onclick = () => {
+  const r = { id: Math.max(0, ...records.map(x => x.id)) + 1, DateReceived: nowDate(), TimeReceived: nowTime(), WF: "New", photos: [], deleted: false };
+  for (const t of TABS) for (const f of t.fields) if (f.default) r[f.key] = f.default;
+  records.push(r); save(records); selectedId = r.id; openForm(true);
+};
+$("#btn-edit").onclick = () => cur() ? openForm(false) : toast("Select a record first");
+$("#btn-delete").onclick = () => { const r = cur(); if (!r) return toast("Select a record first");
+  if (confirm("Delete this record?")) { r.deleted = true; save(records); selectedId = null; renderGrid(); } };
+$("#btn-new").onclick = () => { filter = "new"; renderGrid(); };
+$("#btn-deleted").onclick = () => { filter = "deleted"; renderGrid(); };
+$("#btn-all").onclick = () => { filter = "all"; renderGrid(); };
+for (const id of ["btn-preview","btn-divider","btn-logout"]) $("#"+id).onclick = () => toast("Not implemented in sandbox");
+
+/* =====================================================================
+   FORM
+   ===================================================================== */
+let draft = null, formTab = "park", isNewInsert = false;
+function fieldsHtml(tab, rec, withErr) {
+  return expandFields(tab, rec).map(f => {
+    const v = rec[f.key] ?? "";
+    const mand = f.mandatory || (f.mandatoryIf && f.mandatoryIf(rec));
+    const id = "f_" + f.key;
+    const label = (mand ? "MANDATORY - " : "") + f.label;
+    const input = f.type === "select"
+      ? `<select id="${id}" name="${f.key}">${f.options.map(o => `<option value="${esc(o)}" ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`
+      : `<input type="text" id="${id}" name="${f.key}" value="${esc(v)}">`;
+    const bad = withErr && mand && !String(v).trim();
+    return `<div class="field ${mand ? "mandatory" : ""} ${bad ? "err" : ""}" data-key="${f.key}"><label for="${id}">${esc(label)}</label>${input}<div class="errmsg">This field is required.</div></div>`;
+  }).join("");
+}
+function openForm(isNew) {
+  const r = cur(); isNewInsert = isNew;
+  draft = JSON.parse(JSON.stringify(r)); formTab = "park";
+  $("#today-form").textContent = headerDate();
+  renderForm(); show("form");
+}
+function captureForm() {
+  document.querySelectorAll("#form-panel [name]").forEach(el => { draft[el.name] = el.value; });
+}
+function renderForm(withErr) {
+  $("#form-tabs").innerHTML = TABS.map(t => `<a data-tab="${t.id}" class="${t.id === formTab ? "on" : ""}">${esc(t.title)}</a>`).join("");
+  $("#form-panel").innerHTML = fieldsHtml(TABS.find(t => t.id === formTab), draft, withErr);
+  document.querySelectorAll("#form-tabs a").forEach(a => a.onclick = () => { captureForm(); formTab = a.dataset.tab; renderForm(); });
+  // a rating of 3 or more reveals the issue description field under it
+  document.querySelectorAll("#form-panel select").forEach(sel => { if (/^r[0-9]+$/.test(sel.name)) sel.onchange = () => { captureForm(); renderForm(); }; });
+}
+function validate() {
+  const missing = [];
+  for (const t of TABS) for (const f of expandFields(t, draft)) {
+    const mand = f.mandatory || (f.mandatoryIf && f.mandatoryIf(draft));
+    if (mand && !String(draft[f.key] ?? "").trim()) missing.push({ tab: t.id, label: f.label });
+  }
+  return missing;
+}
+function commit(email) {
+  captureForm();
+  const missing = validate();
+  if (missing.length) { formTab = missing[0].tab; renderForm(true); alert("Mandatory fields missing:\n- " + missing.map(m => m.label).join("\n- ")); return false; }
+  draft.WF = "Completed";
+  const i = records.findIndex(r => r.id === draft.id);
+  // keep photos list from the stored record (photos are saved separately)
+  draft.photos = records[i].photos;
+  records[i] = draft; save(records);
+  toast(email ? "Saved. (Email is stubbed in the sandbox, nothing was sent.)" : "Saved.");
+  renderGrid(); show("grid"); return true;
+}
+$("#btn-save").onclick = () => commit(false);
+$("#btn-saveemail").onclick = () => commit(true);
+$("#btn-cancel").onclick = () => {
+  if (isNewInsert) { records = records.filter(r => r.id !== draft.id); save(records); selectedId = null; }
+  renderGrid(); show("grid");
+};
+$("#btn-refresh").onclick = () => { captureForm(); renderForm(); };
+$("#btn-showimage").onclick = () => toast("Image of record not implemented in sandbox");
+
+/* =====================================================================
+   PHOTOS  (added after the inspection is created, via the menu)
+   ===================================================================== */
+let pending = null; // { dataUrl }
+async function openPhotos() {
+  const r = cur();
+  if (!r) { show("grid"); return toast("Select a record first"); }
+  pending = null; $("#photo-caption").value = ""; $("#photo-file").value = "";
+  const al = $("#photo-alert"); al.classList.remove("hide");
+  $("#photo-alert-text").textContent = r.photos.length ? `Current Record has ${r.photos.length} Photo(s).` : "Current Record No Photos.";
+  $("#photo-info").textContent = `Record: ${r.ParkName || "(no park name)"} ${r.ParkNumber || ""} ${r.Node || ""} | ${r.DateReceived} ${r.TimeReceived}`;
+  await renderGallery(0); show("photo");
+}
+let slide = 0, sliding = false;
+const imgTag = (p, url) => `<img src="${url}" alt="${esc(p.caption)}" data-photo="${p.id}" data-caption="${esc(p.caption)}">`;
+async function photoUrls(r) { const u = []; for (const p of r.photos) { const rec = await getPhoto(p.id); u.push(rec ? rec.dataUrl : ""); } return u; }
+function setDots(i) { document.querySelectorAll(".cdots li").forEach((li, k) => li.classList.toggle("on", k === i)); }
+// dir: 1 = slide in from the right (next), -1 = from the left (prev). Omit for a plain redraw.
+async function renderGallery(active, dir) {
+  const r = cur(); const box = $("#preview-photo"); const n = r.photos.length;
+  if (!n) { box.innerHTML = ""; return; }
+  const target = ((active ?? slide) % n + n) % n;
+  const urls = await photoUrls(r), p = r.photos[target];
+  const car = $("#carousel");
+  if (dir && car && n > 1 && target !== slide) {
+    if (sliding) return; sliding = true;
+    const old = car.querySelector(".item"), inc = document.createElement("div");
+    inc.className = "item incoming"; inc.innerHTML = imgTag(p, urls[target]); car.insertBefore(inc, old.nextSibling);
+    const opt = { duration: 600, easing: "ease-in-out", fill: "forwards" };
+    old.animate([{ transform: "translateX(0)" }, { transform: `translateX(${-100 * dir}%)` }], opt);
+    const anim = inc.animate([{ transform: `translateX(${100 * dir}%)` }, { transform: "translateX(0)" }], opt);
+    await Promise.race([anim.finished, new Promise(r => setTimeout(r, 750))]); // timer fallback: animations pause in hidden tabs
+    old.remove(); inc.classList.remove("incoming"); inc.getAnimations().forEach(x => x.cancel());
+    slide = target; setDots(slide); sliding = false; return;
+  }
+  slide = target;
+  if (n === 1) { box.innerHTML = imgTag(p, urls[slide]); return; }
+  box.innerHTML = `<div class="carousel" id="carousel"><div class="item">${imgTag(p, urls[slide])}</div>
+    <a class="cctl l" role="button" aria-label="Previous" id="car-prev">&#10094;</a><a class="cctl r" role="button" aria-label="Next" id="car-next">&#10095;</a>
+    <ol class="cdots">${r.photos.map((_, i) => `<li class="${i === slide ? "on" : ""}" data-i="${i}"></li>`).join("")}</ol></div>`;
+  $("#car-prev").onclick = () => renderGallery(slide - 1, -1);
+  $("#car-next").onclick = () => renderGallery(slide + 1, 1);
+  box.querySelectorAll(".cdots li").forEach(li => li.onclick = () => { const i = +li.dataset.i; if (i !== slide) renderGallery(i, i > slide ? 1 : -1); });
+}
+$("#photo-upload").onclick = () => $("#photo-file").click();
+$("#photo-file").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { pending = { dataUrl: rd.result }; $("#photo-caption").value = ""; $("#photo-alert").classList.add("hide"); $("#preview-photo").innerHTML = `<img id="pending-img" src="${rd.result}" alt="pending upload">`; };
+  rd.readAsDataURL(f);
+};
+$("#photo-rotate").onclick = () => {
+  if (!pending) return toast("Upload a photo first");
+  const img = new Image(); img.onload = () => {
+    const c = document.createElement("canvas"); c.width = img.height; c.height = img.width;
+    const x = c.getContext("2d"); x.translate(c.width, 0); x.rotate(Math.PI / 2); x.drawImage(img, 0, 0);
+    pending.dataUrl = c.toDataURL("image/jpeg", .9); $("#pending-img").src = pending.dataUrl;
+  }; img.src = pending.dataUrl;
+};
+// Burn the caption onto the photo: hand-drawn style orange ellipse with white text, lower right of centre.
+function stampCaption(dataUrl, caption) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 1600 / img.width), W = Math.round(img.width * k), H = Math.round(img.height * k);
+      const c = document.createElement("canvas"); c.width = W; c.height = H;
+      const x = c.getContext("2d"); x.drawImage(img, 0, 0, W, H);
+      const fs = Math.round(W * 0.0175); x.font = fs + "px Arial, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
+      const tw = x.measureText(caption).width;
+      const cx = W * 0.77, cy = H * 0.85, rx = Math.max(W * 0.1075, tw / 2 + W * 0.03), ry = Math.max(H * 0.078, fs * 1.4);
+      x.strokeStyle = "#ff5a00"; x.lineWidth = Math.max(2, W * 0.004); x.lineCap = "round";
+      x.beginPath(); x.ellipse(cx, cy, rx, ry, -0.2, 0.15, Math.PI * 2 - 0.1); x.stroke();
+      x.fillStyle = "#fff"; x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 3; x.fillText(caption, cx, cy);
+      res(c.toDataURL("image/jpeg", 0.9));
+    };
+    img.src = dataUrl;
+  });
+}
+$("#photo-save").onclick = async () => {
+  if (!pending) return toast("Upload a photo first");
+  const caption = $("#photo-caption").value.trim();
+  if (!caption) return toast("Caption is required");
+  const r = cur(); const id = "p" + Date.now() + Math.floor(Math.random() * 1000);
+  const stamped = await stampCaption(pending.dataUrl, caption);
+  await putPhoto({ id, dataUrl: stamped });
+  r.photos.push({ id, caption }); save(records);
+  pending = null; $("#photo-file").value = "";
+  $("#photo-alert").classList.remove("hide"); $("#photo-alert-text").textContent = `Photo saved. Current Record has ${r.photos.length} Photo(s).`;
+  await renderGallery(r.photos.length - 1); // caption stays in the box, as in the live screen
+};
+$("#photo-cancel").onclick = () => { pending = null; $("#photo-caption").value = ""; $("#photo-file").value = ""; renderGallery(); };
+
+/* =====================================================================
+   MENU ACTIONS
+   ===================================================================== */
+document.querySelectorAll("#menu .item").forEach(it => it.onclick = async () => {
+  const go = it.dataset.go; closeMenu();
+  if (go === "main") { renderGrid(); show("grid"); }
+  else if (go === "form") { cur() ? openForm(false) : toast("Select a record first"); }
+  else if (go === "photos") openPhotos();
+  else if (go === "sbx-export") {
+    const out = []; for (const r of records) { const c = JSON.parse(JSON.stringify(r)); for (const p of c.photos) p.hasImage = !!(await getPhoto(p.id)); out.push(c); }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" })); a.download = "sandbox-records.json"; a.click();
+  }
+  else if (go === "sbx-reset") { if (confirm("Wipe all sandbox data and reseed?")) { await clearPhotos(); save(seed()); records = load(); selectedId = null; filter = "all"; renderGrid(); show("grid"); } }
+  else toast("Not implemented in sandbox");
+});
+
+// expose state for test harnesses: window.__sandbox.records()
+window.__sandbox = { records: () => JSON.parse(JSON.stringify(records)) };
+
+renderGrid(); show("grid");
+</script>
+</body>
+</html>

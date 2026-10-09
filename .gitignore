@@ -1,0 +1,4 @@
+# Screenshots of the live council system (client data, keep out of git)
+[0-9][0-9][0-9].png
+*.webp
+node_modules/
